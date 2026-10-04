@@ -1,3 +1,1 @@
-return {
-    'lambdalisue/vim-suda',branch = "master",
-}
+return { 'lambdalisue/vim-suda',branch = "master" } -- read or write files with sudo command
