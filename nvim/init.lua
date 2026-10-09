@@ -6,27 +6,34 @@ vim.cmd.source(vimrc)
 -- LSP related
 -- =========================================================
 vim.api.nvim_create_autocmd("LspAttach", {
-  group = vim.api.nvim_create_augroup("UserLspConfig", {}),
+  group = vim.api.nvim_create_augroup("UserLspConfig", { clear = true }),
   callback = function(e)
     -- See `:help vim.lsp.*` for documentation on any of the below functions
-    local opts = { buffer = e.buf }
-    vim.keymap.set("n", "gd", function() vim.lsp.buf.definition() end, opts) -- jump to definition
-    vim.keymap.set("n", "<leader><space>", vim.lsp.buf.hover, opts) -- hover info
-    vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts) -- broken(?)
-    vim.keymap.set("n", "<leader>D", vim.lsp.buf.type_definition, opts) -- jump to type_definition -- after this C-^ to jump back
-    vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts) -- project-wide object rename
-    vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts) -- broken(?)
-    vim.keymap.set("n", "gr", vim.lsp.buf.references, opts) -- list references
-    vim.keymap.set("n", "]d", function() vim.diagnostic.goto_next() end, opts) -- jump to next error
-    vim.keymap.set("n", "[d", function() vim.diagnostic.goto_prev() end, opts) -- jump to prev error
-    vim.keymap.set("n", "<leader>f", function() vim.lsp.buf.format({ async = true }) end, opts) -- completely autoformats the current buffer
-    vim.keymap.set("n", "<leader>d", function() vim.diagnostic.open_float({ border = "rounded",}) end, opts) -- open current diagnostic in a float
+    local function map(mode, keys, action, description)
+      vim.keymap.set(mode, keys, action, { buffer = e.buf, desc = description, })
+    end
+    map("n", "gd", vim.lsp.buf.definition, "Jump to definition")
+    map("n", "<leader><space>", vim.lsp.buf.hover, "Show hover documentation")
+    map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
+    map("n", "<leader>D", vim.lsp.buf.type_definition, "Jump to type definition, C-^ to jump back")
+    map("n", "<leader>rn", vim.lsp.buf.rename, "Project-wide rename symbol")
+    map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, "Code actions") -- depends on current lsp's capabilities & code context
+    map("n", "gr", vim.lsp.buf.references, "List references")
+    map("n", "]d", vim.diagnostic.goto_next, "Jump to next error")
+    map("n", "[d", vim.diagnostic.goto_prev, "Jump to prev error")
+    map("n", "<leader>f", function()
+      vim.lsp.buf.format({ async = true })
+    end, "Completely autoformat the current buffer")
+    map("n", "<leader>d", function()
+      vim.diagnostic.open_float({ border = "rounded" })
+    end, "Open current diagnostic in a float")
 
     local client = vim.lsp.get_client_by_id(e.data.client_id)
     vim.notify(("LSP attached: %s"):format(client and client.name or "?"))
   end,
 })
 
+-- Alternatively :checkhealth vim.lsp
 vim.api.nvim_create_user_command("LspInfo", function()
   vim.print(vim.lsp.get_clients({ bufnr = 0 }))
 end, {
