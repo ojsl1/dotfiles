@@ -1,4 +1,4 @@
-echo "Inaction breeds self-doubt." | queercat -b -f 6
+echo "install p10k before using this .zshrc"
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -9,6 +9,7 @@ fi
 export ZSH="$HOME/.oh-my-zsh"
 export PATH=$HOME/bin:$PATH
 
+echo "if your ZSH_THEME is broken you're probably missing theme-specific fonts"
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
 DISABLE_MAGIC_FUNCTIONS="true"
@@ -26,9 +27,11 @@ plugins=(
   zsh-syntax-highlighting
 )
 
+echo "install omz before using this .zshrc"
 fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
 source $ZSH/oh-my-zsh.sh
-export LANG=en_GB.UTF-8
+# export LANG=en_GB.UTF-8
+echo "export your current locale in .zshrc"
 
 if [[ -n $SSH_CONNECTION ]]; then
   export EDITOR='vim'

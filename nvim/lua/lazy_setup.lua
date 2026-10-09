@@ -57,6 +57,7 @@ require("lazy").setup({
         "lua-language-server",
         "html-lsp",
         "css-lsp",
+        "vtsls",
       },
       automatic_enable = true,
     },
