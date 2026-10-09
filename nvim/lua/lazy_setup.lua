@@ -51,20 +51,34 @@ require("lazy").setup({
     { "mason-org/mason-lspconfig.nvim", opts = {},
       dependencies = { "mason-org/mason.nvim", "neovim/nvim-lspconfig" },
       -- OPNTIONAL IF USING: :Mason to install servers.
-      ensure_installed = {
-        -- Mason pkg names
-        "clangd",
-        "lua-language-server",
-        "html-lsp",
-        "css-lsp",
-        "vtsls",
+      opts = {
+        ensure_installed = {
+          -- Mason pkg names
+          "clangd",
+          "lua-language-server",
+          "html-lsp",
+          "css-lsp",
+          "vtsls",
+        },
+        automatic_enable = true,
       },
-      automatic_enable = true,
     },
 
     -- PROVIDES BASIC LSP CONFIGURATIONS --
     { "neovim/nvim-lspconfig",
       config = function()
+        vim.lsp.config("*", {
+          capabilities = require("blink.cmp").get_lsp_capabilities(),
+        })
+        vim.lsp.config("html", {
+          settings = {
+            css = {
+              lint = {
+                validProperties = {},
+              },
+            },
+          },
+        })
         vim.lsp.config("lua_ls",{
           -- hack: stop luals nagging when editing nvim configs
           settings = { Lua = { diagnostics = { globals = { "vim" },},},},
@@ -76,6 +90,7 @@ require("lazy").setup({
           "lua_ls",
           "html",
           "cssls",
+          "vtsls",
         })
       end,
     },
@@ -94,15 +109,43 @@ require("lazy").setup({
         -- C-k: Toggle signature help (if signature.enabled = true)
         --
         -- See :h blink-cmp-config-keymap for defining your own keymap
-        keymap = { preset = 'default' },
-        -- personal note: I want ctrl-h and ctrl-l for previous and next
+        keymap = {
+          preset = 'default',
+          ["<C-d>"] = { "scroll_documentation_down", "fallback" },
+          ["<C-u>"] = { "scroll_documentation_up", "fallback" },
+        },
+        signature = {
+          -- not supported by all LSPs
+          enabled = true, -- default off
+          window = {
+            border = "rounded",
+          },
+        },
         appearance = {
           -- 'mono' (default) for 'Nerd Font Mono' or 'normal' for 'Nerd Font'
           -- Adjusts spacing to ensure icons are aligned
           nerd_font_variant = 'mono'
         },
-        -- (Default) Only show the documentation popup when manually triggered
-        completion = { documentation = { auto_show = true } },
+        completion = {
+          documentation = {
+            auto_show = true, -- default off
+            window = {
+              border = "single",
+              winblend = 20,
+            },
+          },
+          menu = {
+            border = "single",
+            winblend = 5,
+            draw = {
+              columns = {
+                { "kind_icon" },
+                { "label", "label_description", gap = 1 },
+                { "kind" },
+              },
+            },
+          },
+        },
         sources = {
           default = { "lsp", "path", "snippets", "buffer"},
           },
