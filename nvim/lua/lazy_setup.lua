@@ -48,16 +48,15 @@ require("lazy").setup({
     -- 2. translates nvim-lspconfig server names to and from mason.nvim pkg names
     -- 3. provides lsp binary paths to nvim-lspconfig
     -- 20261004: removed tag='v1.32.0' and pin=true, might cause issues again
-    { "mason-org/mason-lspconfig.nvim", opts = {},
+    { "mason-org/mason-lspconfig.nvim",
       dependencies = { "mason-org/mason.nvim", "neovim/nvim-lspconfig" },
-      -- OPNTIONAL IF USING: :Mason to install servers.
       opts = {
         ensure_installed = {
-          -- Mason pkg names
+          -- LSP configuration names
           "clangd",
-          "lua-language-server",
-          "html-lsp",
-          "css-lsp",
+          "lua_ls",
+          -- "html" (use below patched LSP for combined html/css/js intellisense)
+          "cssls",
           "vtsls",
         },
         automatic_enable = true,
@@ -67,6 +66,18 @@ require("lazy").setup({
     -- PROVIDES BASIC LSP CONFIGURATIONS --
     { "neovim/nvim-lspconfig",
       config = function()
+        -- Use a patched HTML language server from NPM
+        vim.lsp.config("html", {
+          cmd = {
+            "npx",
+            "--yes",
+            -- "--no-update-notifier",
+            -- "--loglevel=error", if lsp.log starts growing too fast
+            "--package=@t1ckbase/vscode-langservers-extracted",
+            "vscode-html-language-server",
+            "--stdio",
+          },
+        })
         vim.lsp.config("*", {
           capabilities = require("blink.cmp").get_lsp_capabilities(),
         })
