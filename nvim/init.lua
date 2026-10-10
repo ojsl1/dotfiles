@@ -248,9 +248,52 @@ do
 end
 
 -- =========================================================
+-- Options: Editor Appearance & Behavior
+-- =========================================================
+do
+  vim.opt.number = true
+  vim.opt.relativenumber = true
+
+  vim.opt.showtabline = 2
+
+  vim.opt.cursorline = true
+
+  vim.opt.laststatus = 2
+
+
+  -- Tabs are displayed (ie. not actually inserted) as 2 spaces
+  vim.opt.tabstop = 2
+  -- indenting with `>>` and '<<' gives 2 spaces
+  vim.opt.shiftwidth = 2
+  -- Pressing tab inserts spaces instead of tab characters
+  vim.opt.expandtab = true
+
+  vim.opt.wrap = false
+
+  vim.opt.incsearch = true
+
+  vim.opt.termguicolors = true
+
+  vim.opt.scrolloff = 8
+  vim.opt.signcolumn = "yes"
+
+  vim.opt.colorcolumn = "80"
+end
+
+-- =========================================================
 -- Keymaps: Navigation and External Tools
 -- =========================================================
 do
+  vim.keymap.set("n", "<leader>tt", function() ToggleTransparency() end, {
+    desc = "Toggle transparency",
+  })
+
+  vim.keymap.set("i", "<C-c>", "<Esc>")
+
+  vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
+
+  vim.keymap.set("n", "<leader>l", "<cmd>nohl<CR>", { silent = true })
+
   vim.keymap.set("n", "<leader>b", function()
     vim.fn.jobstart({"firefox", vim.fn.expand("%:p")}, {
       detach = true,
@@ -258,6 +301,25 @@ do
   end, {
     desc = "Open current file in Firefox, e.g. HTML files",
   })
+
+  local function toggle_quickfix()
+      local quickfix_open = false
+
+      for _, win in ipairs(vim.fn.getwininfo()) do
+          if win.quickfix == 1 then
+              quickfix_open = true
+              break
+          end
+      end
+
+      if quickfix_open then
+          vim.cmd("cclose")
+      else
+          vim.cmd("copen")
+      end
+  end
+
+  vim.keymap.set("n", "<leader>q", toggle_quickfix, { desc = "Toggle Quickfix List" })
 end
 
 -- =========================================================
@@ -269,6 +331,7 @@ do
   vim.opt.foldlevel = 0
   vim.opt.foldenable = true
 
+  vim.keymap.set("n", "<2-LeftMouse>", "za", { desc = "Toggle folds with double click"})
   vim.keymap.set("i", "<F9>", "<C-O>za", { desc = "Toggle fold" })
   vim.keymap.set("n", "<F9>", "za", { desc = "Toggle fold" })
   vim.keymap.set("o", "<F9>", "<C-C>za", { desc = "Toggle fold" })

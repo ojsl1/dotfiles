@@ -24,9 +24,6 @@ vim.opt.rtp:prepend(lazypath)
 
 vim.g.mapleader = ","
 vim.g.maplocalleader = ","
-vim.opt.relativenumber = true
-vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
-vim.keymap.set("n", "<leader>tt", function() ToggleTransparency() end, { desc = "Toggle transparency" })
 
 -----------------------------------------------------------
 

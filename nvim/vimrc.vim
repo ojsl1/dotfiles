@@ -1,24 +1,7 @@
-set laststatus=2
-set showtabline=2
 set nocompatible
 set noshowmode
-set cursorline
-set termguicolors 
 set hidden
-set nowrap
-set incsearch
-set scrolloff=8
-set signcolumn=yes
-set colorcolumn=80
-set number
 syntax enable
-
-" Tabs are displayed (ie. not actually inserted) as 2 spaces
-set tabstop=2
-" indenting with `>>` and '<<' gives 2 spaces
-set shiftwidth=2
-" Pressing tab inserts spaces instead of tab characters
-set expandtab
 
 "set listchars=tab:→\,
 "set list
@@ -59,9 +42,7 @@ set expandtab
 "
 "set listchars=tab:»■,trail:■
 "
-"
 
-" Custom mappings:
 let mapleader = ","
 
 " netrw magic
@@ -76,20 +57,8 @@ let g:netrw_list_hide='.*\.swp$'
 " open files in left window by default
 let g:netrw_chgwin=1
 
-" remap shift-enter to fire up the sidebar
-nnoremap <silent> <S-CR> :rightbelow 20vs<CR>:e .<CR>
-" the same remap as above - may be necessary in some distros
-nnoremap <silent> <C-M> :rightbelow 20vs<CR>:e .<CR>
-
 " remap control-enter to open files in new tab
 nmap <silent> <C-CR> t :rightbelow 20vs<CR>:e .<CR>:wincmd h<CR>
-" the same remap as above - may be necessary in some distros
-nmap <silent> <NL> t :rightbelow 20vs<CR>:e .<CR>:wincmd h<CR>
-
-
-
-" Double click folds to open/close them
-noremap <2-LeftMouse> za
 
 " DEPRECATED Saving as sudo when you forget to start nvim as sudo
 cmap w!! w !sudo tee > /dev/null %
@@ -111,16 +80,3 @@ inoremap <C-h>  <Esc>:tabprevious<CR>i
 inoremap <C-l>  <Esc>:tabnext<CR>i
 inoremap <C-t>  <Esc>:tabnew<CR>
 inoremap <C-q>  <Esc>:tabclose<CR>
-
-"Remove all search highlighting by redrawing the screen
-nnoremap <silent> <leader>l :nohl<CR>
-
-"Toggle the builtin Quickfix List
-function! ToggleQuickfix()
-    if empty(filter(getwininfo(), 'v:val.quickfix'))
-        copen
-    else
-        cclose
-    endif
-endfunction
-nnoremap <leader>q :call ToggleQuickfix()<CR>
