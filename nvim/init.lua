@@ -58,8 +58,8 @@ do
   end
   vim.o.viewdir = viewdir
 
-  -- explicit viewoptions: include folds and cursor
-  vim.o.viewoptions = "folds,options,slash,unix,cursor"
+  -- explicit viewoptions: include folds, cursor
+  vim.o.viewoptions = "folds,slash,unix,cursor"
 end
 
 -- =========================================================
@@ -95,21 +95,112 @@ end
 -- Keymaps: Persistence
 -- =========================================================
 do
+  -- force write both shada and view files
   vim.keymap.set('n', '<leader>ss', function()
-    vim.cmd('silent! mkview')   -- save current buffer view (folds, options)
+    vim.cmd('silent! mkview')   -- save current buffer view (folds, cursor)
     vim.cmd('wshada')           -- then write ShaDa
-    vim.notify("Saved ShaDa (marks, registers, command history, jumps, etc) + view (folds, options, cursor, unix, cursor)", vim.log.levels.INFO)
-  end, { noremap = true, desc = 'Save current buffer view and write ShaDa' })
+    vim.notify("Saved ShaDa (marks, registers, command history, jumps, etc) + view (folds, cursor, unix, cursor)", vim.log.levels.INFO)
+  end, {noremap = true, desc = 'Save current buffer view and write ShaDa'}
+  )
 
+  -- force load both shada and view files
   vim.keymap.set('n', '<leader>sl', function()
     vim.cmd('rshada')               -- read/merge shada from disk
-    vim.cmd('silent! loadview')     -- load view for current buffer (folds, local window opts)
+    vim.cmd('silent! loadview')     -- load view for current buffer (folds, cursor)
+
     local last = vim.fn.line([['"]])
     if last > 0 and last <= vim.fn.line("$") then
       vim.cmd('silent! exe "normal! g`\""') -- jump to last cursor
     end
-    vim.notify("Loaded ShaDa (marks, registers, command history, jumps, etc) and view (folds, options, unix, cursor)", vim.log.levels.INFO) -- cant use silent=false with lua callbacks
-  end, { noremap = true, desc = 'Read ShaDa and restore current buffer view & cursor' })
+
+    vim.notify("Loaded ShaDa (marks, registers, command history, jumps, etc) and view (folds, unix, cursor)", vim.log.levels.INFO) -- cant use silent=false with lua callbacks
+  end, {noremap = true, desc = 'Read ShaDa and restore current buffer view & cursor'}
+  )
+
+  -- delete view files
+  vim.keymap.set("n", "<leader>sv", function()
+    local viewdir = vim.o.viewdir
+    local views = vim.fn.glob(viewdir .. "/**/*", false, true)
+    local files = {}
+
+    for _, path in ipairs(views) do
+      if vim.fn.filereadable(path) == 1 then
+        table.insert(files, path)
+      end
+    end
+
+    local count = #files
+    if count == 0 then
+      vim.notify("No saved view files found.", vim.log.levels.INFO)
+      return
+    end
+
+    local choice = vim.fn.confirm(
+      ("Remove all %d saved view file(s)?"):format(count), "&Yes\n&No", 2
+    )
+
+    if choice ~= 1 then
+      vim.notify("View cleanup cancelled.", vim.log.levels.INFO)
+      return
+    end
+
+    local removed = 0
+    for _, path in ipairs(files) do
+      if vim.fn.delete(path) == 0 then
+        removed = removed + 1
+      end
+    end
+
+    vim.notify(("Removed %d of %d saved view file(s)."):format(removed, count),
+      vim.log.levels.INFO
+    )
+  end, {noremap = true, desc = "Delete all saved views"}
+  )
+
+  -- delete shada file
+  vim.keymap.set("n", "<leader>sd", function()
+    local shadafile = vim.o.shadafile
+
+    if shadafile == "" then
+      shadafile = vim.fn.stdpath("state") .. "/shada/main.shada"
+    end
+
+    if shadafile == "NONE" then
+      vim.notify("ShaDa persistence is disabled.", vim.log.levels.WARN)
+      return
+    end
+
+    shadafile = vim.fn.expand(shadafile)
+
+    local size = vim.fn.getfsize(shadafile)
+    if size < 0 then
+      vim.notify("No ShaDa file found: " .. shadafile, vim.log.levels.INFO)
+      return
+    end
+
+    local size_kib = size / 1024
+
+    local choice = vim.fn.confirm(
+      ("Delete the ShaDa file (%d bytes / %.2f KiB)?\n%s")
+      :format(size, size_kib, shadafile),
+      "&Yes\n&No", 2
+    )
+
+    if choice ~= 1 then
+      vim.notify("ShaDa deletion cancelled.", vim.log.levels.INFO)
+      return
+    end
+
+    if vim.fn.delete(shadafile) == 0 then
+      vim.notify(
+        ("Deleted ShaDa file (%d bytes / %.2f KiB)."):format(size, size_kib),
+        vim.log.levels.INFO
+      )
+    else
+      vim.notify("Failed to delete ShaDa file.", vim.log.levels.ERROR)
+    end
+  end, {noremap = true, desc = "Delete ShaDa file"}
+  )
 end
 
 -- =========================================================
@@ -189,15 +280,25 @@ end
 -- Keymaps: Plugins
 -- =========================================================
 do
-  require("telescope").load_extension("file_browser")
+  vim.keymap.set("n", "<space>fw", ":Telescope file_browser<CR>", {
+    desc = "Telescope file browser: open in current working directory",
+  })
+
+  vim.keymap.set("n", "<space>fb", ":Telescope file_browser path=%:p:h select_buffer=true<CR>", {
+    desc = "Telescope file browser: open in current buffers directory",
+  })
+
+  local telescope = (require "telescope")
   local actions = require("telescope.actions")
   local action_state = require("telescope.actions.state")
+  local fb = require ("telescope._extensions.file_browser.actions")
 
+  -- Opens all tagged files in separate tabs/buffers.
   local function open_multi_selection(prompt_bufnr)
     local picker = action_state.get_current_picker(prompt_bufnr)
     local selections = picker:get_multi_selection()
 
-    -- If nothing is tagged open the current file normally.
+    -- (If nothing is tagged open the current file normally)
     if #selections == 0 then
       actions.select_default(prompt_bufnr)
       return
@@ -208,32 +309,58 @@ do
     for _, entry in ipairs(selections) do
       local path = entry.path or entry.filename or entry.value
       if path then
-        -- change as needed: tabedit/edit = tabs/buffers
+        -- (change as needed tabedit/edit = tabs/buffers)
         vim.cmd("tabedit " .. vim.fn.fnameescape(path))
       end
     end
   end
 
-  -- open file_browser with the path of the pwd
-  vim.keymap.set("n", "<space>fw", ":Telescope file_browser<CR>")
-
-  -- open file_browser with the path of the current buffer's directory and select that buffer
-  vim.keymap.set("n", "<space>fb", ":Telescope file_browser path=%:p:h select_buffer=true<CR>")
-
-  require("telescope").setup({
+  telescope.setup({
     extensions = {
       file_browser = {
         mappings = {
           i = {
-            ["<CR>"] = open_multi_selection,
+            ["<C-CR>"] = open_multi_selection,
+            -- to see loaded keymaps: <C-7> or ? in insert/normal mode respectively
+            -- defaults listed below
+            ["<A-c>"] = fb.create,
+            ["<S-CR>"] = fb.create_from_prompt,
+            ["<A-r>"] = fb.rename,
+            ["<A-m>"] = fb.move,
+            ["<A-y>"] = fb.copy,
+            ["<A-d>"] = fb.remove,
+            ["<C-o>"] = fb.open,
+            ["<C-g>"] = fb.goto_parent_dir,
+            ["<C-e>"] = fb.goto_home_dir,
+            ["<C-w>"] = fb.goto_cwd,
+            ["<C-t>"] = fb.change_cwd,
+            ["<C-f>"] = fb.toggle_browser,
+            ["<C-h>"] = fb.toggle_hidden,
+            ["<C-s>"] = fb.toggle_all,
+            ["<bs>"] = fb.backspace,
           },
           n = {
-            ["<CR>"] = open_multi_selection,
+            ["<C-CR>"] = open_multi_selection,
+            -- to see loaded keymaps: <C-7> or ? in insert/normal mode respectively
+            -- defaults listed below
+            ["c"] = fb.create,
+            ["r"] = fb.rename,
+            ["m"] = fb.move,
+            ["y"] = fb.copy,
+            ["d"] = fb.remove,
+            ["o"] = fb.open,
+            ["g"] = fb.goto_parent_dir,
+            ["e"] = fb.goto_home_dir,
+            ["w"] = fb.goto_cwd,
+            ["t"] = fb.change_cwd,
+            ["f"] = fb.toggle_browser,
+            ["h"] = fb.toggle_hidden,
+            ["s"] = fb.toggle_all,
           },
         },
       },
     },
   })
 
-  require("telescope").load_extension("file_browser")
+  telescope.load_extension("file_browser")
 end
