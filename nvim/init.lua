@@ -375,6 +375,37 @@ end
 -- Keymaps: Plugins
 -- =========================================================
 do
+  local telescope = (require "telescope")
+  local builtin = (require "telescope.builtin")
+  local actions = require("telescope.actions")
+  local action_state = require("telescope.actions.state")
+  local fb = require ("telescope._extensions.file_browser.actions")
+
+  vim.keymap.set("n", "<leader>pf", function()
+    builtin.find_files()
+  end, { desc = "Find files" })
+
+  vim.keymap.set("n", "<C-p>", function()
+    builtin.git_files()
+  end, { desc = "Git files: C-n/C-p navs, C-d/C-u scrolls" })
+
+  vim.keymap.set("n", "<leader>ps", function()
+    local input = vim.fn.input("Grep >")
+    if input ~= "" then
+      builtin.grep_string({ search = input })
+    end
+  end, { desc = "Project search" })
+
+  vim.keymap.set('n','<leader>psa', function()
+    builtin.grep_string({
+      search = vim.fn.input("Grep (all) >"),
+      additional_args =
+        function() return {"--hidden", "--no-ignore"}
+      end,
+      desc = "Project search (all)"
+    })
+  end)
+
   vim.keymap.set("n", "<space>fw", ":Telescope file_browser<CR>", {
     desc = "Telescope file browser: open in current working directory",
   })
@@ -382,11 +413,6 @@ do
   vim.keymap.set("n", "<space>fb", ":Telescope file_browser path=%:p:h select_buffer=true<CR>", {
     desc = "Telescope file browser: open in current buffers directory",
   })
-
-  local telescope = (require "telescope")
-  local actions = require("telescope.actions")
-  local action_state = require("telescope.actions.state")
-  local fb = require ("telescope._extensions.file_browser.actions")
 
   -- Opens all tagged files in separate tabs/buffers.
   local function open_multi_selection(prompt_bufnr)
