@@ -1,4 +1,3 @@
--- lua/plugins/telescope.lua
 -- Reason for installing: Powerful search engine
 return {
   "nvim-telescope/telescope.nvim",

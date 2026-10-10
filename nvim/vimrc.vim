@@ -13,9 +13,6 @@ set colorcolumn=80
 set number
 syntax enable
 
-set foldmethod=indent
-set foldnestmax=1
-
 " Tabs are displayed (ie. not actually inserted) as 2 spaces
 set tabstop=2
 " indenting with `>>` and '<<' gives 2 spaces
@@ -100,14 +97,6 @@ cmap w!! w !sudo tee > /dev/null %
 " Toggle wrap
 command! -nargs=* Wrap set wrap linebreak nolist
 command! -nargs=* Nowrap set nowrap nolbr nolist
-
-
-" Custom keybindings:
-" Toggle vimfolds
-inoremap <F9> <C-O>za
-nnoremap <F9> za
-onoremap <F9> <C-C>za
-vnoremap <F9> zf
 
 "Tab navigation like Firefox
 nnoremap <C-h>  :tabprevious<CR>
