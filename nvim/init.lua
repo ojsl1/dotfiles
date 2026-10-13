@@ -32,7 +32,7 @@ do
       local client = vim.lsp.get_client_by_id(e.data.client_id)
       vim.notify(("LSP attached: %s"):format(client and client.name or "?"))
     end,
-    })
+  })
 
   -- Alternatively :checkhealth vim.lsp
   vim.api.nvim_create_user_command("LspInfo", function()
@@ -48,7 +48,7 @@ end
 do
   -- ~/.local/state/nvim/shada/
   -- Preserve marks, registers, history, etc. across sessions
-  vim.opt.shada = {"'100", "<500", "s10", "h"}  -- similar to: set shada='100,<100,s10,h
+  vim.opt.shada = { "'100", "<500", "s10", "h" } -- similar to: set shada='100,<100,s10,h
 
   -- Store window views under neovim configuration dir
   local viewdir = vim.fn.stdpath('config') .. '/view'
@@ -97,24 +97,26 @@ end
 do
   -- force write both shada and view files
   vim.keymap.set('n', '<leader>ss', function()
-    vim.cmd('silent! mkview')   -- save current buffer view (folds, cursor)
-    vim.cmd('wshada')           -- then write ShaDa
-    vim.notify("Saved ShaDa (marks, registers, command history, jumps, etc) + view (folds, cursor, unix, cursor)", vim.log.levels.INFO)
-  end, {noremap = true, desc = 'Save current buffer view and write ShaDa'}
+    vim.cmd('silent! mkview') -- save current buffer view (folds, cursor)
+    vim.cmd('wshada')         -- then write ShaDa
+    vim.notify("Saved ShaDa (marks, registers, command history, jumps, etc) + view (folds, cursor, unix, cursor)",
+      vim.log.levels.INFO)
+  end, { noremap = true, desc = 'Save current buffer view and write ShaDa' }
   )
 
   -- force load both shada and view files
   vim.keymap.set('n', '<leader>sl', function()
-    vim.cmd('rshada')               -- read/merge shada from disk
-    vim.cmd('silent! loadview')     -- load view for current buffer (folds, cursor)
+    vim.cmd('rshada')           -- read/merge shada from disk
+    vim.cmd('silent! loadview') -- load view for current buffer (folds, cursor)
 
     local last = vim.fn.line([['"]])
     if last > 0 and last <= vim.fn.line("$") then
       vim.cmd('silent! exe "normal! g`\""') -- jump to last cursor
     end
 
-    vim.notify("Loaded ShaDa (marks, registers, command history, jumps, etc) and view (folds, unix, cursor)", vim.log.levels.INFO) -- cant use silent=false with lua callbacks
-  end, {noremap = true, desc = 'Read ShaDa and restore current buffer view & cursor'}
+    vim.notify("Loaded ShaDa (marks, registers, command history, jumps, etc) and view (folds, unix, cursor)",
+      vim.log.levels.INFO) -- cant use silent=false with lua callbacks
+  end, { noremap = true, desc = 'Read ShaDa and restore current buffer view & cursor' }
   )
 
   -- delete view files
@@ -154,7 +156,7 @@ do
     vim.notify(("Removed %d of %d saved view file(s)."):format(removed, count),
       vim.log.levels.INFO
     )
-  end, {noremap = true, desc = "Delete all saved views"}
+  end, { noremap = true, desc = "Delete all saved views" }
   )
 
   -- delete shada file
@@ -199,7 +201,7 @@ do
     else
       vim.notify("Failed to delete ShaDa file.", vim.log.levels.ERROR)
     end
-  end, {noremap = true, desc = "Delete ShaDa file"}
+  end, { noremap = true, desc = "Delete ShaDa file" }
   )
 end
 
@@ -233,17 +235,17 @@ do
   })
 
   vim.keymap.set("x", "<leader>c*", function()
-      local start_line = vim.fn.line("v")
-      local end_line = vim.fn.line(".")
+    local start_line = vim.fn.line("v")
+    local end_line = vim.fn.line(".")
 
-      if start_line > end_line then
-          start_line, end_line = end_line, start_line
-      end
+    if start_line > end_line then
+      start_line, end_line = end_line, start_line
+    end
 
-      vim.fn.append(end_line, "*/")
-      vim.fn.append(start_line - 1, "/*")
+    vim.fn.append(end_line, "*/")
+    vim.fn.append(start_line - 1, "/*")
   end, {
-      desc = "Wrap selected lines in /* */",
+    desc = "Wrap selected lines in /* */",
   })
 end
 
@@ -291,7 +293,7 @@ do
   vim.keymap.set("n", "<leader>l", "<cmd>nohl<CR>", { silent = true })
 
   vim.keymap.set("n", "<leader>b", function()
-    vim.fn.jobstart({"firefox", vim.fn.expand("%:p")}, {
+    vim.fn.jobstart({ "firefox", vim.fn.expand("%:p") }, {
       detach = true,
     })
   end, {
@@ -299,20 +301,20 @@ do
   })
 
   local function toggle_quickfix()
-      local quickfix_open = false
+    local quickfix_open = false
 
-      for _, win in ipairs(vim.fn.getwininfo()) do
-          if win.quickfix == 1 then
-              quickfix_open = true
-              break
-          end
+    for _, win in ipairs(vim.fn.getwininfo()) do
+      if win.quickfix == 1 then
+        quickfix_open = true
+        break
       end
+    end
 
-      if quickfix_open then
-          vim.cmd("cclose")
-      else
-          vim.cmd("copen")
-      end
+    if quickfix_open then
+      vim.cmd("cclose")
+    else
+      vim.cmd("copen")
+    end
   end
 
   vim.keymap.set("n", "<leader>q", toggle_quickfix, {
@@ -352,6 +354,15 @@ do
   vim.keymap.set("n", "<leader>tt", function() toggle_transparency() end, {
     desc = "Toggle transparency",
   })
+
+  local colorcolumn_enabled = true
+
+  vim.keymap.set("n", "<leader>cc", function()
+    colorcolumn_enabled = not colorcolumn_enabled
+    vim.opt.colorcolumn = colorcolumn_enabled and "80" or ""
+  end, {
+    desc = "Toggle colorcolumn",
+  })
 end
 
 -- =========================================================
@@ -363,7 +374,7 @@ do
   vim.opt.foldlevel = 0
   vim.opt.foldenable = true
 
-  vim.keymap.set("n", "<2-LeftMouse>", "za", { desc = "Toggle folds with double click"})
+  vim.keymap.set("n", "<2-LeftMouse>", "za", { desc = "Toggle folds with double click" })
   vim.keymap.set("i", "<F9>", "<C-O>za", { desc = "Toggle fold" })
   vim.keymap.set("n", "<F9>", "za", { desc = "Toggle fold" })
   vim.keymap.set("o", "<F9>", "<C-C>za", { desc = "Toggle fold" })
@@ -372,14 +383,14 @@ do
 end
 
 -- =========================================================
--- Keymaps: Plugins
+-- Keymaps: Plugins: Telescope
 -- =========================================================
 do
   local telescope = (require "telescope")
   local builtin = (require "telescope.builtin")
   local actions = require("telescope.actions")
   local action_state = require("telescope.actions.state")
-  local fb = require ("telescope._extensions.file_browser.actions")
+  local fb = require("telescope._extensions.file_browser.actions")
 
   vim.keymap.set("n", "<leader>pf", function()
     builtin.find_files()
@@ -396,12 +407,13 @@ do
     end
   end, { desc = "Project search" })
 
-  vim.keymap.set('n','<leader>psa', function()
+  vim.keymap.set('n', '<leader>psa', function()
     builtin.grep_string({
       search = vim.fn.input("Grep (all) >"),
       additional_args =
-        function() return {"--hidden", "--no-ignore"}
-      end,
+          function()
+            return { "--hidden", "--no-ignore" }
+          end,
       desc = "Project search (all)"
     })
   end)
@@ -484,5 +496,14 @@ do
   })
 
   telescope.load_extension("file_browser")
+end
+
+-- =========================================================
+-- Keymaps: Plugins
+-- =========================================================
+do
+  vim.keymap.set('n', '<space>fn', '<Cmd>Neotree toggle<CR>', {
+    desc = "Toggle Neotree filebrowser",
+  })
 end
 
