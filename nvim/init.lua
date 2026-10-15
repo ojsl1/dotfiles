@@ -3,6 +3,31 @@ local vimrc = vim.fn.stdpath("config") .. "/vimrc.vim"
 vim.cmd.source(vimrc)
 
 -- =========================================================
+-- Shared helper functions
+-- =========================================================
+-- {{{
+  local function project_root()
+    local root = vim.fn.systemlist(
+      "git rev-parse --show-toplevel"
+    )[1]
+
+    if vim.v.shell_error == 0 and root then
+      return root
+    end
+
+    return vim.fn.getcwd()
+  end
+
+  local function restore_last_cursor()
+    local last = vim.fn.line([['"]])
+
+    if last > 0 and last <= vim.fn.line("$") then
+      vim.cmd([[silent! exe "normal! g`\""]]) -- jump to last cursor pos
+    end
+  end
+-- }}}
+
+-- =========================================================
 -- LSP related
 -- =========================================================
 do
@@ -83,10 +108,7 @@ do
     group = "RestoreCursor",
     pattern = "*",
     callback = function()
-      local last = vim.fn.line([['"]])
-      if last > 0 and last <= vim.fn.line("$") then
-        vim.cmd([[silent! exe "normal! g`\""]])
-      end
+      restore_last_cursor()
     end,
   })
 end
@@ -108,12 +130,7 @@ do
   vim.keymap.set('n', '<leader>sl', function()
     vim.cmd('rshada')           -- read/merge shada from disk
     vim.cmd('silent! loadview') -- load view for current buffer (folds, cursor)
-
-    local last = vim.fn.line([['"]])
-    if last > 0 and last <= vim.fn.line("$") then
-      vim.cmd('silent! exe "normal! g`\""') -- jump to last cursor
-    end
-
+    restore_last_cursor()
     vim.notify("Loaded ShaDa (marks, registers, command history, jumps, etc) and view (folds, unix, cursor)",
       vim.log.levels.INFO) -- cant use silent=false with lua callbacks
   end, { noremap = true, desc = 'Read ShaDa and restore current buffer view & cursor' }
@@ -393,30 +410,39 @@ do
   local fb = require("telescope._extensions.file_browser.actions")
 
   vim.keymap.set("n", "<leader>pf", function()
-    builtin.find_files()
+    builtin.find_files({
+      cwd = project_root(),
+    })
   end, { desc = "Find files" })
 
   vim.keymap.set("n", "<C-p>", function()
-    builtin.git_files()
+    builtin.git_files({
+      cwd = project_root(),
+    })
   end, { desc = "Git files: C-n/C-p navs, C-d/C-u scrolls" })
 
   vim.keymap.set("n", "<leader>ps", function()
     local input = vim.fn.input("Grep >")
     if input ~= "" then
-      builtin.grep_string({ search = input })
+      builtin.grep_string({
+        search = input,
+        cwd = project_root(),
+    })
     end
   end, { desc = "Project search" })
 
   vim.keymap.set('n', '<leader>psa', function()
-    builtin.grep_string({
-      search = vim.fn.input("Grep (all) >"),
-      additional_args =
-          function()
-            return { "--hidden", "--no-ignore" }
-          end,
-      desc = "Project search (all)"
-    })
-  end)
+    local input = vim.fn.input("Grep (all) >")
+    if input ~= "" then
+      builtin.grep_string({
+        search = input,
+        cwd = project_root(),
+        additional_args = function()
+          return { "--hidden", "--no-ignore" }
+        end,
+      })
+    end
+  end, { desc = "Project search (all)"})
 
   vim.keymap.set("n", "<space>fw", ":Telescope file_browser<CR>", {
     desc = "Telescope file browser: open in current working directory",
@@ -502,8 +528,9 @@ end
 -- Keymaps: Plugins
 -- =========================================================
 do
-  vim.keymap.set('n', '<space>fn', '<Cmd>Neotree toggle<CR>', {
+  vim.keymap.set('n', '<space>fe', '<Cmd>Neotree toggle<CR>', {
     desc = "Toggle Neotree filebrowser",
   })
 end
+
 
